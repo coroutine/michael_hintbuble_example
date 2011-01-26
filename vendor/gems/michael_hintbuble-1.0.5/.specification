@@ -1,0 +1,124 @@
+--- !ruby/object:Gem::Specification 
+name: michael_hintbuble
+version: !ruby/object:Gem::Version 
+  hash: 31
+  prerelease: false
+  segments: 
+  - 1
+  - 0
+  - 4
+  version: 1.0.4
+platform: ruby
+authors: 
+- Coroutine
+- Tim Lowrimore
+- John Dugan
+autorequire: 
+bindir: bin
+cert_chain: []
+
+date: 2010-10-19 00:00:00 -05:00
+default_executable: 
+dependencies: 
+- !ruby/object:Gem::Dependency 
+  name: actionpack
+  prerelease: false
+  requirement: &id001 !ruby/object:Gem::Requirement 
+    none: false
+    requirements: 
+    - - ">="
+      - !ruby/object:Gem::Version 
+        hash: 11
+        segments: 
+        - 2
+        - 3
+        - 4
+        version: 2.3.4
+  type: :runtime
+  version_requirements: *id001
+- !ruby/object:Gem::Dependency 
+  name: activesupport
+  prerelease: false
+  requirement: &id002 !ruby/object:Gem::Requirement 
+    none: false
+    requirements: 
+    - - ">="
+      - !ruby/object:Gem::Version 
+        hash: 11
+        segments: 
+        - 2
+        - 3
+        - 4
+        version: 2.3.4
+  type: :development
+  version_requirements: *id002
+description: Michael HintBuble allows you to generate hint bubbles and tooltips in Rails applications using the same syntax used for rendering templates.
+email: gems@coroutine.com
+executables: []
+
+extensions: []
+
+extra_rdoc_files: 
+- README.rdoc
+files: 
+- .gitignore
+- .specification
+- MIT-LICENSE
+- README.rdoc
+- Rakefile
+- VERSION
+- generators/michael_hintbuble/michael_hintbuble_generator.rb
+- generators/michael_hintbuble/templates/error_bubble_pointer.png
+- generators/michael_hintbuble/templates/help_bubble_pointer.png
+- generators/michael_hintbuble/templates/michael_hintbuble.css
+- generators/michael_hintbuble/templates/michael_hintbuble.js
+- init.rb
+- lib/generators/michael_hintbuble/michael_hintbuble_generator.rb
+- lib/generators/michael_hintbuble/templates/error_bubble_pointer.png
+- lib/generators/michael_hintbuble/templates/help_bubble_pointer.png
+- lib/generators/michael_hintbuble/templates/michael_hintbuble.css
+- lib/generators/michael_hintbuble/templates/michael_hintbuble.js
+- lib/michael_hintbuble.rb
+- lib/michael_hintbuble/helpers.rb
+- michael_hintbuble.gemspec
+- rails/init.rb
+- test/michael_hintbuble/helpers_test.rb
+- test/test_helper.rb
+has_rdoc: true
+homepage: http://github.com/coroutine/michael_hintbuble
+licenses: []
+
+post_install_message: 
+rdoc_options: 
+- --charset=UTF-8
+require_paths: 
+- lib
+required_ruby_version: !ruby/object:Gem::Requirement 
+  none: false
+  requirements: 
+  - - ">="
+    - !ruby/object:Gem::Version 
+      hash: 3
+      segments: 
+      - 0
+      version: "0"
+required_rubygems_version: !ruby/object:Gem::Requirement 
+  none: false
+  requirements: 
+  - - ">="
+    - !ruby/object:Gem::Version 
+      hash: 3
+      segments: 
+      - 0
+      version: "0"
+requirements: []
+
+rubyforge_project: 
+rubygems_version: 1.3.7
+signing_key: 
+specification_version: 3
+summary: Dead simple, beautiful hint bubbles for Rails.
+test_files: 
+- test/michael_hintbuble/helpers_test.rb
+- test/test_helper.rb
+

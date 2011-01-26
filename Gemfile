@@ -11,8 +11,8 @@ source "http://rubygems.org"
 
 # rails, etc.
 gem "rack"
-gem "rails", "3.0.0"
+gem "rails", "3.0.3"
 
 # other gems
-gem "michael_hintbuble"
-gem "sqlite3-ruby"
+gem "michael_hintbuble", :path => File.join(File.dirname(__FILE__), "vendor/gems")
+gem "sqlite3"
