@@ -20,6 +20,15 @@ var MichaelHintbuble = {}
 MichaelHintbuble.SUPPORT_IE6_BULLSHIT = false;   
 
 
+/**
+ * This property governs which Javascript framework
+ * to use with this plugin.
+ * 
+ * Defaults to JQuery, but also supports Prototype
+ */
+MichaelHintbuble.JS_FRAMEWORK = 'Prototype';
+
+
 
 //-----------------------------------------------------------------------------
 // Bubble class
@@ -38,10 +47,10 @@ MichaelHintbuble.Bubble = function(target_id, content, options) {
     this._class         = options["class"]      || "";
     this._eventNames    = options["eventNames"] || ["mouseover"]
     this._position      = options["position"]   || "right";
-    this._beforeShow    = options["beforeShow"] || Prototype.emptyFunction
-    this._afterShow     = options["afterShow"]  || Prototype.emptyFunction
-    this._beforeHide    = options["beforeHide"] || Prototype.emptyFunction
-    this._afterHide     = options["afterHide"]  || Prototype.emptyFunction
+    this._beforeShow    = options["beforeShow"] || function() {}
+    this._afterShow     = options["afterShow"]  || function() {}
+    this._beforeHide    = options["beforeHide"] || function() {}
+    this._afterHide     = options["afterHide"]  || function() {}
     
     this._makeBubble();
     this._makePositioner();
@@ -137,32 +146,7 @@ MichaelHintbuble.Bubble.show = function(id) {
  * This function establishes all of the observations specified in the options.
  */
 MichaelHintbuble.Bubble.prototype._attachObservers = function() {
-    if (this._eventNames.indexOf("focus") > -1) {
-        this._target.observe("focus", function() {
-            this.show();
-        }.bind(this));
-        this._target.observe("blur", function() {
-            this.hide();
-        }.bind(this));
-    }
-    if (this._eventNames.indexOf("mouseover") > -1) {
-        this._target.observe("mouseover", function() {
-            this.show();
-        }.bind(this));
-        this._target.observe("mouseout", function() {
-            this.hide();
-        }.bind(this));
-    }
-    Event.observe(window, "resize", function() {
-        if (this.isShowing()) {
-            this.setPosition();
-        }
-    }.bind(this));
-    Event.observe(window, "scroll", function() {
-        if (this.isShowing()) {
-            this.setPosition();
-        }
-    }.bind(this));
+	MichaelHintbuble.Adapter._attachObservers(this);
 };
 
 
@@ -171,16 +155,17 @@ MichaelHintbuble.Bubble.prototype._attachObservers = function() {
  */
 MichaelHintbuble.Bubble.prototype._makeBubble = function() {
     if (!this._element) {
-        this._container = new Element("DIV");
-        this._container.addClassName("container");
+        this._container			   = document.createElement("DIV");
+        this._container.className  = "container";
         
-        this._element = new Element("DIV");
-        this._element.addClassName("michael_hintbuble_bubble");
-        this._element.addClassName(this._class);
+        this._element			   = document.createElement("DIV");
+		this._element.className    = (this._class) ? "michael_hintbuble_bubble " + this._class : "michael_hintbuble_bubble";
         this._element.update(this._container);
-        this._element.hide();
-        document.body.insert(this._element);
+
+        this._element.style.display = "none";
+        document.body.appendChild(this._element);
     }
+
 };
 
 
@@ -189,12 +174,11 @@ MichaelHintbuble.Bubble.prototype._makeBubble = function() {
  */
 MichaelHintbuble.Bubble.prototype._makeFrame = function() {
     if (!this._frame) {
-        this._frame = new Element("IFRAME");
-        this._frame.addClassName("michael_hintbuble_bubble_frame");
-        this._frame.addClassName(this._class + "_frame");
-        this._frame.setAttribute("src", "about:blank");
+        this._frame 			    = document.createElement("IFRAME");
+		this._frame.className       = (this._class) ? this._class + "_frame kenny_dialoggins_dialog_frame" : "kenny_dialoggins_dialog_frame";
+		this._frame.src             = "about:blank";
         this._frame.hide();
-        document.body.insert(this._frame);
+        document.body.appendChild(this._frame);
     }
 };
 
@@ -214,9 +198,8 @@ MichaelHintbuble.Bubble.prototype._makePositioner = function() {
  * class representing the relative position of the bubble to the target.
  */
 MichaelHintbuble.Bubble.prototype._updateContainerClass = function() {
-    this._container.removeClassName();
-    this._container.addClassName("container");
-    this._container.addClassName(this._positioner.styleClassForPosition());
+	this._container.className = "container " + this._positioner.styleClassForPosition();
+	
 };
 
 
@@ -226,10 +209,10 @@ MichaelHintbuble.Bubble.prototype._updateContainerClass = function() {
  */
 MichaelHintbuble.Bubble.prototype.finalize = function() {
     this._positioner.finalize();
-    this._container.remove();
-    this._element.remove();
+    document.body.removeChild(this._container);
+	document.body.removeChild(this._element);
     if (this._frame) {
-        this._frame.remove();
+        document.body.removeChild(this._frame);
     }
        
     this._target        = null;
@@ -245,20 +228,7 @@ MichaelHintbuble.Bubble.prototype.finalize = function() {
  * required).
  */
 MichaelHintbuble.Bubble.prototype.hide = function() {
-    new Effect.Fade(this._element, {
-        duration: 0.2,
-        beforeStart:    this._beforeHide,
-        afterFinish:    function() {
-            this._isShowing = false;
-            this._afterHide();
-        }.bind(this)
-    });
-    
-    if (this._frame) {
-        new Effect.Fade(this._frame, {
-            duration: 0.2
-        });
-    }
+	MichaelHintbuble.Adapter.hide(this);
 };
 
 
@@ -280,11 +250,11 @@ MichaelHintbuble.Bubble.prototype.isShowing = function() {
  *                          to the hint bubble container.
  */
 MichaelHintbuble.Bubble.prototype.setContent = function(content) {
-    var content_container = new Element("DIV");
-    content_container.className = "content";
-    content_container.update(content);
-    
-    this._container.update(content_container);
+	var content_container	     = document.createElement("DIV");
+    content_container.className  = "content";
+
+	content_container.innerHTML  = content;
+	this._container.appendChild(content_container);
 };
 
 
@@ -312,28 +282,7 @@ MichaelHintbuble.Bubble.prototype.setPosition = function(position) {
  * required).
  */
 MichaelHintbuble.Bubble.prototype.show = function() {
-    this.setPosition();
-    
-    if (this._frame) {
-        var layout                  = new Element.Layout(this._element);
-        this._frame.style.top       = this._element.style.top;
-        this._frame.style.left      = this._element.style.left;
-        this._frame.style.width     = layout.get("padding-box-width") + "px";
-        this._frame.style.height    = layout.get("padding-box-height") + "px";
-        
-        new Effect.Appear(this._frame, {
-            duration: 0.2
-        });
-    }
-    
-    new Effect.Appear(this._element, { 
-        duration:       0.2,
-        beforeStart:    this._beforeShow,
-        afterFinish:    function() {
-            this._isShowing = true;
-            this._afterShow();
-        }.bind(this)
-    });
+    MichaelHintbuble.Adapter.show(this);
 };
 
 
@@ -401,10 +350,7 @@ MichaelHintbuble.BubblePositioner.POSITION_FN_MAP = {
  * This function positions the element below the target.
  */
 MichaelHintbuble.BubblePositioner.prototype._bottom = function() {
-    var to = this._targetAdjustedOffset();
-    var tl = new Element.Layout(this._target);
-    
-    this._element.style.top = (to.top + tl.get("border-box-height")) + "px";
+	MichaelHintbuble.Adapter._bottom(this);
 };
 
 
@@ -413,16 +359,7 @@ MichaelHintbuble.BubblePositioner.prototype._bottom = function() {
  * axis it is on.
  */
 MichaelHintbuble.BubblePositioner.prototype._center = function() {
-    var to = this._targetAdjustedOffset();
-    var tl = new Element.Layout(this._target);
-    var el = new Element.Layout(this._element);
-    
-    if (this._axis === MichaelHintbuble.BubblePositioner.X_AXIS) {
-        this._element.style.top = (to.top + Math.ceil(tl.get("border-box-height")/2) - Math.ceil(el.get("padding-box-height")/2)) + "px";
-    }
-    else if (this._axis === MichaelHintbuble.BubblePositioner.Y_AXIS) {
-        this._element.style.left = (to.left + Math.ceil(tl.get("border-box-width")/2) - Math.ceil(el.get("padding-box-width")/2)) + "px";
-    }
+    MichaelHintbuble.Adapter._center(this);
 };
 
 
@@ -462,10 +399,7 @@ MichaelHintbuble.BubblePositioner.prototype._isElementWithinViewport = function(
  * This function positions the element to the left of the target.
  */
 MichaelHintbuble.BubblePositioner.prototype._left = function() {
-    var to = this._targetAdjustedOffset();
-    var el = new Element.Layout(this._element);
-    
-    this._element.style.left = (to.left - el.get("padding-box-width")) + "px";
+    MichaelHintbuble.Adapter._left(this);
 };
 
 
@@ -473,10 +407,7 @@ MichaelHintbuble.BubblePositioner.prototype._left = function() {
  * This function positions the element to the right of the target.
  */
 MichaelHintbuble.BubblePositioner.prototype._right = function() {
-    var to = this._targetAdjustedOffset();
-    var tl = new Element.Layout(this._target);
-    
-    this._element.style.left = (to.left + tl.get("border-box-width")) + "px";
+   MichaelHintbuble.Adapter._right(this);
 };
 
 
@@ -501,14 +432,7 @@ MichaelHintbuble.BubblePositioner.prototype._setPosition = function(position) {
  * element.
  */
 MichaelHintbuble.BubblePositioner.prototype._targetAdjustedOffset = function() {
-    var bs = $$("body").first().cumulativeScrollOffset();
-    var to = this._target.cumulativeOffset();
-    var ts = this._target.cumulativeScrollOffset();
-    
-    return {
-        "top": to.top - ts.top + bs.top,
-        "left": to.left - ts.left + bs.left
-    }
+	return MichaelHintbuble.Adapter._targetAdjustedOffset(this);
 };
 
 
@@ -516,10 +440,7 @@ MichaelHintbuble.BubblePositioner.prototype._targetAdjustedOffset = function() {
  * This function positions the element above the target.
  */
 MichaelHintbuble.BubblePositioner.prototype._top = function() {
-    var to = this._targetAdjustedOffset();
-    var el = new Element.Layout(this._element);
-    
-    this._element.style.top = (to.top - el.get("padding-box-height")) + "px";
+    MichaelHintbuble.Adapter._top(this);
 };
 
 
@@ -567,3 +488,174 @@ MichaelHintbuble.BubblePositioner.prototype.setPosition = function(position) {
 MichaelHintbuble.BubblePositioner.prototype.styleClassForPosition = function() {
     return this._position.toLowerCase();
 };
+
+
+
+// ----------------------------------------------------------------------------
+// JQuery Adapter 
+// ----------------------------------------------------------------------------
+
+MichaelHintbuble.JQueryAdapter = function() {};
+
+MichaelHintbuble.JQueryAdapter.prototype._attachObservers = function(bubble) {
+	
+};
+
+MichaelHintbuble.JQueryAdapter.prototype.hide = function(bubble) {
+
+};
+
+MichaelHintbuble.JQueryAdapter.prototype.show = function(bubble) {
+
+};
+
+
+// ----------------------------------------------------------------------------
+// Prototype Adapter 
+// ----------------------------------------------------------------------------
+
+MichaelHintbuble.PrototypeAdapter = function() {};
+
+// for the Bubble class
+
+MichaelHintbuble.PrototypeAdapter.prototype._attachObservers = function(bubble) {
+	if (bubble._eventNames.indexOf("focus") > -1) {
+        bubble._target.observe("focus", function() {
+            bubble.show();
+        }.bind(bubble));
+        bubble._target.observe("blur", function() {
+            bubble.hide();
+        }.bind(bubble));
+    }
+    if (bubble._eventNames.indexOf("mouseover") > -1) {
+        bubble._target.observe("mouseover", function() {
+            bubble.show();
+        }.bind(bubble));
+        bubble._target.observe("mouseout", function() {
+            bubble.hide();
+        }.bind(bubble));
+    }
+    Event.observe(window, "resize", function() {
+        if (bubble.isShowing()) {
+            bubble.setPosition();
+        }
+    }.bind(bubble));
+    Event.observe(window, "scroll", function() {
+        if (bubble.isShowing()) {
+            bubble.setPosition();
+        }
+    }.bind(bubble));
+	
+}
+
+MichaelHintbuble.PrototypeAdapter.prototype.hide = function(bubble) {
+	new Effect.Fade(bubble._element, {
+        duration: 0.2,
+        beforeStart:    bubble._beforeHide,
+        afterFinish:    function() {
+            bubble._isShowing = false;
+            bubble._afterHide();
+        }.bind(bubble)
+    });
+    
+    if (bubble._frame) {
+        new Effect.Fade(bubble._frame, {
+            duration: 0.2
+        });
+    }
+};
+
+MichaelHintbuble.PrototypeAdapter.prototype.show = function(bubble) {
+	bubble.setPosition();
+    
+    if (bubble._frame) {
+        var layout                    = new Element.Layout(bubble._element);
+        bubble._frame.style.top       = bubble._element.style.top;
+        bubble._frame.style.left      = bubble._element.style.left;
+        bubble._frame.style.width     = layout.get("padding-box-width") + "px";
+        bubble._frame.style.height    = layout.get("padding-box-height") + "px";
+        
+        new Effect.Appear(bubble._frame, {
+            duration: 0.2
+        });
+    }
+    
+    new Effect.Appear(bubble._element, { 
+        duration:       0.2,
+        beforeStart:    bubble._beforeShow,
+        afterFinish:    function() {
+            bubble._isShowing = true;
+            bubble._afterShow();
+        }.bind(bubble)
+    });
+};
+
+// for the BubblePositioner class
+
+MichaelHintbuble.PrototypeAdapter.prototype._bottom = function(bubble) {
+	var to = bubble._targetAdjustedOffset();
+	var tl = new Element.Layout(bubble._target);
+
+	bubble._element.style.top = (to.top + tl.get("border-box-height")) + "px";
+}
+
+MichaelHintbuble.PrototypeAdapter.prototype._top = function(bubble) {
+	var to = bubble._targetAdjustedOffset();
+    var el = new Element.Layout(bubble._element);
+    
+    bubble._element.style.top = (to.top - el.get("padding-box-height")) + "px";
+
+}
+
+MichaelHintbuble.PrototypeAdapter.prototype._left = function(bubble) {
+	var to = bubble._targetAdjustedOffset();
+    var el = new Element.Layout(bubble._element);
+    
+    bubble._element.style.left = (to.left - el.get("padding-box-width")) + "px";
+}
+
+MichaelHintbuble.PrototypeAdapter.prototype._right = function(bubble) {
+	var to = bubble._targetAdjustedOffset();
+    var tl = new Element.Layout(bubble._target);
+
+    bubble._element.style.left = (to.left + tl.get("border-box-width")) + "px";
+}
+
+MichaelHintbuble.PrototypeAdapter.prototype._center = function(bubble) {
+	var to = bubble._targetAdjustedOffset();
+    var tl = new Element.Layout(bubble._target);
+    var el = new Element.Layout(bubble._element);
+    
+    if (bubble._axis === MichaelHintbuble.BubblePositioner.X_AXIS) {
+        bubble._element.style.top = (to.top + Math.ceil(tl.get("border-box-height")/2) - Math.ceil(el.get("padding-box-height")/2)) + "px";
+    }
+    else if (bubble._axis === MichaelHintbuble.BubblePositioner.Y_AXIS) {
+        bubble._element.style.left = (to.left + Math.ceil(tl.get("border-box-width")/2) - Math.ceil(el.get("padding-box-width")/2)) + "px";
+    }
+}
+
+MichaelHintbuble.PrototypeAdapter.prototype._targetAdjustedOffset = function(bubble) {
+	var bs = $$("body").first().cumulativeScrollOffset();
+    var to = bubble._target.cumulativeOffset();
+    var ts = bubble._target.cumulativeScrollOffset();
+    
+    return {
+        "top": to.top - ts.top + bs.top,
+        "left": to.left - ts.left + bs.left
+    }
+}
+	
+
+
+// ----------------------------------------------------------------------------
+// Set adapter
+// ----------------------------------------------------------------------------
+
+if (MichaelHintbuble.JS_FRAMEWORK.toLowerCase() == 'prototype') {
+	MichaelHintbuble.Adapter = new MichaelHintbuble.PrototypeAdapter();
+} else {
+	MichaelHintbuble.Adapter = new MichaelHintbuble.JQueryAdapter();
+}
+
+
+

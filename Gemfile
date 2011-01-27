@@ -14,5 +14,5 @@ gem "rack"
 gem "rails", "3.0.3"
 
 # other gems
-gem "michael_hintbuble", :path => File.join(File.dirname(__FILE__), "vendor/gems")
+gem "michael_hintbuble", :path => File.join(File.dirname(__FILE__), '/vendor/gems/michael_hintbuble-1.0.5')
 gem "sqlite3"

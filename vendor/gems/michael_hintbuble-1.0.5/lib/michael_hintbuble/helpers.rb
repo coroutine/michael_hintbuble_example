@@ -78,7 +78,9 @@ module Coroutine                #:nodoc:
         raise "You gotta specify a target id to register a hint bubble, baby."  unless target_id
         raise "You gotta provide content to register a hint bubble, baby."      unless content
         
-        javascript_tag "Event.observe(window, 'load', function() { MichaelHintbuble.Bubble.instances['#{target_id}'] = new MichaelHintbuble.Bubble('#{target_id}', '#{content}', #{javascript_options}) });"
+        closure = "function() { MichaelHintbuble.Bubble.instances['#{target_id}'] = new MichaelHintbuble.Bubble('#{target_id}', '#{content}', #{javascript_options}) }";
+        
+        javascript_tag "if (window.addEventListener) { window.addEventListener('load', #{closure}, false); } else { window.attachEvent('onload', #{closure}); }"
       end
             
             

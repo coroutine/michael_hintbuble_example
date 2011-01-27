@@ -1,5 +1,5 @@
 PATH
-  remote: vendor/gems
+  remote: vendor/gems/michael_hintbuble-1.0.5
   specs:
     michael_hintbuble (1.0.5)
       actionpack (>= 2.3.4)
