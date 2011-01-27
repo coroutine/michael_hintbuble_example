@@ -26,7 +26,7 @@ MichaelHintbuble.SUPPORT_IE6_BULLSHIT = false;
  * 
  * Defaults to JQuery, but also supports Prototype
  */
-MichaelHintbuble.JS_FRAMEWORK = 'Prototype';
+MichaelHintbuble.JS_FRAMEWORK = 'jQuery';
 
 
 
@@ -39,7 +39,7 @@ MichaelHintbuble.JS_FRAMEWORK = 'Prototype';
  * the hint bubble class.
  */
 MichaelHintbuble.Bubble = function(target_id, content, options) {
-    this._target        = $(target_id);
+    this._target        = document.getElementById(target_id);
     this._element       = null;
     this._positioner    = null;
     this._isShowing     = null;
@@ -160,7 +160,7 @@ MichaelHintbuble.Bubble.prototype._makeBubble = function() {
         
         this._element			   = document.createElement("DIV");
 		this._element.className    = (this._class) ? "michael_hintbuble_bubble " + this._class : "michael_hintbuble_bubble";
-        this._element.update(this._container);
+        this._element.appendChild(this._container);
 
         this._element.style.display = "none";
         document.body.appendChild(this._element);
@@ -370,28 +370,7 @@ MichaelHintbuble.BubblePositioner.prototype._center = function() {
  * @returns {Boolean} whether or not the element is contained within the viewport.
  */
 MichaelHintbuble.BubblePositioner.prototype._isElementWithinViewport = function() {
-    var isWithinViewport    = true;
-    var fnMap               = MichaelHintbuble.BubblePositioner.POSITION_FN_MAP;
-    var method              = null;
-    var viewPortMinEdge     = null;
-    var viewPortMaxEdge     = null;
-    var elementMinEdge      = null;
-    var elementMaxEdge      = null;
-    
-    for (var prop in fnMap) {
-        method              = fnMap[prop];
-        viewportMinEdge     = document.viewport.getScrollOffsets()[prop];
-        viewportMaxEdge     = viewportMinEdge + document.viewport[method]();
-        elementMinEdge      = parseInt(this._element.style[prop] || 0);
-        elementMaxEdge      = elementMinEdge + this._element[method]();
-        
-        if ((elementMaxEdge > viewportMaxEdge) || (elementMinEdge < viewportMinEdge)) {
-            isWithinViewport = false;
-            break;
-        }
-    }
-    
-    return isWithinViewport;
+	return MichaelHintbuble.Adapter._isElementWithinViewport(this);
 };
 
 
@@ -497,17 +476,154 @@ MichaelHintbuble.BubblePositioner.prototype.styleClassForPosition = function() {
 
 MichaelHintbuble.JQueryAdapter = function() {};
 
+// for the Bubble class
+
 MichaelHintbuble.JQueryAdapter.prototype._attachObservers = function(bubble) {
 	
-};
+	var target = $(bubble._target);
+	
+	if (bubble._eventNames.indexOf("focus") > -1) {
+		target.focus(function() {
+			bubble.show();
+		});
+		target.blur(function() {
+			bubble.hide();
+		});
+    }
+    if (bubble._eventNames.indexOf("mouseover") > -1) {
+		target.mouseover(function() {
+			bubble.show();
+		});
+		target.mouseout(function() {
+			bubble.hide();
+		});
+    }
+	$(window).resize(function() {
+		if (bubble.isShowing()) {
+            bubble.setPosition();
+        }
+	});
+	$(window).scroll(function() {
+		if (bubble.isShowing()) {
+            bubble.setPosition();
+        }
+	});	
+}
 
 MichaelHintbuble.JQueryAdapter.prototype.hide = function(bubble) {
+	bubble._beforeHide;
+	$(bubble._element).fadeOut(200);
+	bubble._isShowing = false;
+    bubble._afterHide();
+	
+	// *cw* bind?
+	
+	
+	if (bubble._frame) {  									     	
+		$(bubble._frame).fadeOut(200)  ;                     	
+	}
 
 };
 
 MichaelHintbuble.JQueryAdapter.prototype.show = function(bubble) {
+	bubble.setPosition();
+    
+	var frame = $(bubble._frame);
+	var element = $(bubble._element);
+
+    if (bubble._frame) {
+        frame.css('top',     element.css('top'));
+        frame.css('left',    element.css('left'));
+        frame.css('width',   element.innerWidth() + "px");
+        frame.css('height',  element.innerHeight() + "px");
+        
+		frame.fadeIn(200);
+    }
+
+	bubble._beforeShow;
+	element.fadeIn(200,function() { 				  	 
+		bubble._isShowing = true;                  			
+	    bubble._afterShow;   	                                 
+	});
 
 };
+
+// for the BubblePositioner class
+
+MichaelHintbuble.JQueryAdapter.prototype._bottom = function(bubble) {
+	var to = bubble._targetAdjustedOffset();
+
+	$(bubble._element).css('top', (to.top + $(bubble._target).outerHeight() + "px" ));
+}
+
+MichaelHintbuble.JQueryAdapter.prototype._top = function(bubble) {
+	var to = bubble._targetAdjustedOffset();
+
+	$(bubble._element).css('top', (to.top + $(bubble._element).innerHeight() + "px" ));
+}
+
+MichaelHintbuble.JQueryAdapter.prototype._left = function(bubble) {
+	var to = bubble._targetAdjustedOffset();
+
+	$(bubble._element).css('left', (to.left + $(bubble._element).innerWidth() + "px" ));
+}
+
+MichaelHintbuble.JQueryAdapter.prototype._right = function(bubble) {
+	var to = bubble._targetAdjustedOffset();
+
+	$(bubble._element).css('left', (to.left + $(bubble._target).outerWidth() + "px" ));
+}
+
+MichaelHintbuble.JQueryAdapter.prototype._center = function(bubble) {
+	var to = bubble._targetAdjustedOffset();
+    
+    if (bubble._axis === MichaelHintbuble.BubblePositioner.X_AXIS) {
+		$(bubble._element).css('top', (to.top + Math.ceil(($(bubble._target).outerHeight())/2) - Math.ceil(($(bubble._element).innerHeight())/2)) + "px" );
+    }
+    else if (bubble._axis === MichaelHintbuble.BubblePositioner.Y_AXIS) {
+		$(bubble._element).css('left', (to.left + Math.ceil(($(bubble._target).outerWidth())/2) - Math.ceil(($(bubble._element).innerWidth())/2)) + "px" );
+    }
+}
+
+MichaelHintbuble.JQueryAdapter.prototype._targetAdjustedOffset = function(bubble) {
+	
+	var bs = $("body").offset();
+    var to = $(bubble._target).offset();
+	var ts = {"top": $(bubble._target).scrollTop(), "left": $(bubble._target).scrollLeft() };
+    
+	//console.log({"top": to.top - ts.top + bs.top, "left": to.left - ts.left + bs.left});
+
+    return {
+        "top": to.top - ts.top + bs.top,
+        "left": to.left - ts.left + bs.left
+    }
+}
+
+MichaelHintbuble.JQueryAdapter.prototype._isElementWithinViewport = function(bubble) {
+	var isWithinViewport    = true;
+	var fnMap               = MichaelHintbuble.BubblePositioner.POSITION_FN_MAP;
+	var method              = null;
+	var viewPortMinEdge     = null;
+	var viewPortMaxEdge     = null;
+	var elementMinEdge      = null;
+	var elementMaxEdge      = null;
+
+	// for (var prop in fnMap) {
+	//     method              = prop.charAt(0).toUpperCase() + prop.slice(1);
+	//     viewportMinEdge     = document.viewport.getScrollOffsets()[prop];
+	//     viewportMaxEdge     = viewportMinEdge + document.viewport[method]();
+	//     elementMinEdge      = parseInt($(bubble._element).css(prop) || 0);
+	//     elementMaxEdge      = elementMinEdge + bubble._element[method]();
+	//     
+	//     if ((elementMaxEdge > viewportMaxEdge) || (elementMinEdge < viewportMinEdge)) {
+	//         isWithinViewport = false;
+	//         break;
+	//     }
+	// }
+
+
+	return isWithinViewport;
+}
 
 
 // ----------------------------------------------------------------------------
@@ -643,6 +759,31 @@ MichaelHintbuble.PrototypeAdapter.prototype._targetAdjustedOffset = function(bub
         "top": to.top - ts.top + bs.top,
         "left": to.left - ts.left + bs.left
     }
+}
+
+MichaelHintbuble.PrototypeAdapter.prototype._isElementWithinViewport = function(bubble) {
+	var isWithinViewport    = true;
+    var fnMap               = MichaelHintbuble.BubblePositioner.POSITION_FN_MAP;
+    var method              = null;
+    var viewPortMinEdge     = null;
+    var viewPortMaxEdge     = null;
+    var elementMinEdge      = null;
+    var elementMaxEdge      = null;
+    
+    for (var prop in fnMap) {
+        method              = fnMap[prop];
+        viewportMinEdge     = document.viewport.getScrollOffsets()[prop];
+        viewportMaxEdge     = viewportMinEdge + document.viewport[method]();
+        elementMinEdge      = parseInt(bubble._element.style[prop] || 0);
+        elementMaxEdge      = elementMinEdge + bubble._element[method]();
+        
+        if ((elementMaxEdge > viewportMaxEdge) || (elementMinEdge < viewportMinEdge)) {
+            isWithinViewport = false;
+            break;
+        }
+    }
+    
+    return isWithinViewport;
 }
 	
 
