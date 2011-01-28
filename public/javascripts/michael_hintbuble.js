@@ -175,9 +175,9 @@ MichaelHintbuble.Bubble.prototype._makeBubble = function() {
 MichaelHintbuble.Bubble.prototype._makeFrame = function() {
     if (!this._frame) {
         this._frame 			    = document.createElement("IFRAME");
-		this._frame.className       = (this._class) ? this._class + "_frame kenny_dialoggins_dialog_frame" : "kenny_dialoggins_dialog_frame";
+		this._frame.className       = (this._class) ? this._class + "_frame michael_hintbuble_bubble_frame" : "michael_hintbuble_bubble_frame";
 		this._frame.src             = "about:blank";
-        this._frame.hide();
+        this._frame.style.display   = "none";
         document.body.appendChild(this._frame);
     }
 };
@@ -482,7 +482,7 @@ MichaelHintbuble.JQueryAdapter.prototype._attachObservers = function(bubble) {
 	
 	var target = $(bubble._target);
 	
-	if (bubble._eventNames.indexOf("focus") > -1) {
+	if (jQuery.inArray("focus", bubble._eventNames) > -1) {
 		target.focus(function() {
 			bubble.show();
 		});
@@ -490,7 +490,7 @@ MichaelHintbuble.JQueryAdapter.prototype._attachObservers = function(bubble) {
 			bubble.hide();
 		});
     }
-    if (bubble._eventNames.indexOf("mouseover") > -1) {
+    if (jQuery.inArray("mouseover", bubble._eventNames) > -1) {
 		target.mouseover(function() {
 			bubble.show();
 		});
@@ -514,9 +514,8 @@ MichaelHintbuble.JQueryAdapter.prototype.hide = function(bubble) {
 	bubble._beforeHide;
 	$(bubble._element).fadeOut(200);
 	bubble._isShowing = false;
-    bubble._afterHide();
+	    bubble._afterHide();
 	
-	// *cw* bind?
 	
 	
 	if (bubble._frame) {  									     	
@@ -540,6 +539,8 @@ MichaelHintbuble.JQueryAdapter.prototype.show = function(bubble) {
 		frame.fadeIn(200);
     }
 
+
+	
 	bubble._beforeShow;
 	element.fadeIn(200,function() { 				  	 
 		bubble._isShowing = true;                  			
@@ -559,13 +560,13 @@ MichaelHintbuble.JQueryAdapter.prototype._bottom = function(bubble) {
 MichaelHintbuble.JQueryAdapter.prototype._top = function(bubble) {
 	var to = bubble._targetAdjustedOffset();
 
-	$(bubble._element).css('top', (to.top + $(bubble._element).innerHeight() + "px" ));
+	$(bubble._element).css('top', (to.top - $(bubble._element).innerHeight() + "px" ));
 }
 
 MichaelHintbuble.JQueryAdapter.prototype._left = function(bubble) {
 	var to = bubble._targetAdjustedOffset();
 
-	$(bubble._element).css('left', (to.left + $(bubble._element).innerWidth() + "px" ));
+	$(bubble._element).css('left', (to.left - $(bubble._element).innerWidth() + "px" ));
 }
 
 MichaelHintbuble.JQueryAdapter.prototype._right = function(bubble) {
@@ -586,17 +587,7 @@ MichaelHintbuble.JQueryAdapter.prototype._center = function(bubble) {
 }
 
 MichaelHintbuble.JQueryAdapter.prototype._targetAdjustedOffset = function(bubble) {
-	
-	var bs = $("body").offset();
-    var to = $(bubble._target).offset();
-	var ts = {"top": $(bubble._target).scrollTop(), "left": $(bubble._target).scrollLeft() };
-    
-	//console.log({"top": to.top - ts.top + bs.top, "left": to.left - ts.left + bs.left});
-
-    return {
-        "top": to.top - ts.top + bs.top,
-        "left": to.left - ts.left + bs.left
-    }
+    return  $(bubble._target).offset();
 }
 
 MichaelHintbuble.JQueryAdapter.prototype._isElementWithinViewport = function(bubble) {
@@ -608,18 +599,24 @@ MichaelHintbuble.JQueryAdapter.prototype._isElementWithinViewport = function(bub
 	var elementMinEdge      = null;
 	var elementMaxEdge      = null;
 
-	// for (var prop in fnMap) {
-	//     method              = prop.charAt(0).toUpperCase() + prop.slice(1);
-	//     viewportMinEdge     = document.viewport.getScrollOffsets()[prop];
-	//     viewportMaxEdge     = viewportMinEdge + document.viewport[method]();
-	//     elementMinEdge      = parseInt($(bubble._element).css(prop) || 0);
-	//     elementMaxEdge      = elementMinEdge + bubble._element[method]();
-	//     
-	//     if ((elementMaxEdge > viewportMaxEdge) || (elementMinEdge < viewportMinEdge)) {
-	//         isWithinViewport = false;
-	//         break;
-	//     }
-	// }
+	var scrollOffsets = {"top": $(window).scrollTop(), "left": $(window).scrollLeft() };
+	var jqueryMethodMap = { left: "width", top: "height" };
+
+	
+	for (var prop in fnMap) {
+	    method              = jqueryMethodMap[prop];
+	    viewportMinEdge     = scrollOffsets[prop];
+	    viewportMaxEdge     = viewportMinEdge + $(window)[method]();
+	    elementMinEdge      = parseInt($(bubble._element).css(prop) || 0);
+	    elementMaxEdge      = elementMinEdge + $(bubble._element)[method]();
+	    
+	    if ((elementMaxEdge > viewportMaxEdge) || (elementMinEdge < viewportMinEdge)) {
+	        isWithinViewport = false;
+		
+	        break;
+	    }
+
+	}
 
 
 	return isWithinViewport;
